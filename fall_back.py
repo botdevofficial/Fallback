@@ -6,7 +6,7 @@ import threading
 from datetime import datetime, timedelta
 
 # === Configuration ===
-BOT_TOKEN = "YOUR_FALLBACK_BOT_TOKEN"
+BOT_TOKEN = "7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0"
 PING_TIMEOUT = 180  # 3 minutes
 
 bot = Bot(token=BOT_TOKEN)
