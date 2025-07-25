@@ -6,7 +6,7 @@ from telegram import Bot, Update
 from telegram.constants import ParseMode
 
 # === Configuration ===
-BOT_TOKEN = '7786407965:AAHlLwNr8x_Q-2SFhHoTKaPSth9hQgdJ6rM'
+BOT_TOKEN = '7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
 CHECK_INTERVAL = 5        # seconds between polling attempts
 FALLBACK_TIMEOUT = 180    # 3 minutes = 180 seconds
 MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
