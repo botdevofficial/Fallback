@@ -1,3 +1,3 @@
 #!/bin/bash
 pip install -r requirements.txt
-python3 Seller.py
+python3 fall_back.py
