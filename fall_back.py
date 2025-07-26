@@ -6,16 +6,18 @@ from telegram import Bot, Update
 from telegram.constants import ParseMode
 
 # === Configuration ===
-BOT_TOKEN = '794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
-CHECK_INTERVAL = 5        # seconds between polling attempts
-FALLBACK_TIMEOUT = 180    # 3 minutes = 180 seconds
-MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
-ABOUT_MSG = "<b>This bot is temporarily under maintenance.</b>\n\nPlease wait while we restore full service. Thank you for your patience 🙏"
+BOT_TOKEN = '7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
+CHECK_INTERVAL = 10        # seconds between ping checks
+FALLBACK_TIMEOUT = 120     # 2 minutes = 120 seconds
+MAINTENANCE_MSG = "<b>\ud83d\udea7 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
+ABOUT_MSG = "<b>This bot is temporarily under maintenance.</b>\n\nPlease wait while we restore full service. Thank you for your patience \ud83d\ude4f"
 
 # === Globals ===
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
 last_ping_time = datetime.min  # initialize to very old time
+polling_active = False
+stop_event = threading.Event()
 
 # === Flask Routes ===
 @app.route('/ping', methods=['POST'])
@@ -32,40 +34,71 @@ def health():
 def about():
     return ABOUT_MSG, 200
 
-# === Passive Polling Loop ===
-async def poll_updates():
-    print("[Fallback] Passive update loop started.")
+# === Passive Polling Loop with Blink Logic ===
+async def poll_updates_loop():
+    print("[Fallback] Telegram polling started.")
     offset = None
-    while True:
-        try:
-            updates = await bot.get_updates(offset=offset, timeout=30)
-            if updates:
-                offset = updates[-1].update_id + 1
-                now = datetime.now()
-                fallback_active = (now - last_ping_time).total_seconds() > FALLBACK_TIMEOUT
-                for update in updates:
-                    if update.message and update.message.text:
-                        if update.message.text.strip() == "/about":
-                            await bot.send_message(
-                                chat_id=update.effective_chat.id,
-                                text=ABOUT_MSG,
-                                parse_mode=ParseMode.HTML
-                            )
-                        elif fallback_active:
-                            await bot.send_message(
-                                chat_id=update.effective_chat.id,
-                                text=MAINTENANCE_MSG,
-                                parse_mode=ParseMode.HTML
-                            )
-        except Exception as e:
-            print("Error in polling:", e)
-        await asyncio.sleep(CHECK_INTERVAL)
 
-# === Thread Wrapper ===
-def start_telegram():
-    asyncio.run(poll_updates())
+    try:
+        while not stop_event.is_set():
+            print("[Fallback] Polling ON (2s)...")
+            start_time = asyncio.get_event_loop().time()
+            while asyncio.get_event_loop().time() - start_time < 2:
+                try:
+                    updates = await asyncio.wait_for(bot.get_updates(offset=offset, timeout=5), timeout=6)
+                    if updates:
+                        offset = updates[-1].update_id + 1
+                        for update in updates:
+                            if update.message and update.message.text:
+                                if update.message.text.strip() == "/about":
+                                    await bot.send_message(
+                                        chat_id=update.effective_chat.id,
+                                        text=ABOUT_MSG,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                                else:
+                                    await bot.send_message(
+                                        chat_id=update.effective_chat.id,
+                                        text=MAINTENANCE_MSG,
+                                        parse_mode=ParseMode.HTML
+                                    )
+                except asyncio.TimeoutError:
+                    pass  # No updates in this window
+                except Exception as e:
+                    print("Polling error:", e)
+                if stop_event.is_set():
+                    print("[Fallback] Stopping polling early due to ping.")
+                    return
+            print("[Fallback] Polling OFF (3s)...")
+            await asyncio.sleep(3)
+    except Exception as e:
+        print("[Fallback] Critical polling error:", e)
+
+# === Watcher Thread to Control Polling ===
+def fallback_watchdog():
+    global polling_active
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    task = None
+
+    while True:
+        now = datetime.now()
+        should_poll = (now - last_ping_time).total_seconds() > FALLBACK_TIMEOUT
+
+        if should_poll and not polling_active:
+            print("[Fallback] No ping received. Starting Telegram fallback mode...")
+            stop_event.clear()
+            task = loop.create_task(poll_updates_loop())
+            polling_active = True
+        elif not should_poll and polling_active:
+            print("[Fallback] Ping received again. Stopping Telegram fallback mode.")
+            stop_event.set()
+            polling_active = False
+
+        loop.run_until_complete(asyncio.sleep(CHECK_INTERVAL))
 
 # === Start Everything ===
 if __name__ == '__main__':
-    threading.Thread(target=start_telegram, daemon=True).start()
+    threading.Thread(target=fallback_watchdog, daemon=True).start()
     app.run(host="0.0.0.0", port=8080)
+    
