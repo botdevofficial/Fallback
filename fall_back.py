@@ -53,7 +53,7 @@ async def poll_updates_loop():
         while not stop_event.is_set():
             print("[Fallback] Polling ON (2s)...")
             start_time = asyncio.get_event_loop().time()
-            while asyncio.get_event_loop().time() - start_time < 2:
+            while asyncio.get_event_loop().time() - start_time < 1.2:
                 try:
                     updates = await asyncio.wait_for(bot.get_updates(offset=offset, timeout=5), timeout=6)
                     if updates:
