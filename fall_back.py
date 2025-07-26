@@ -8,9 +8,9 @@ from telegram.constants import ParseMode
 # === Configuration ===
 BOT_TOKEN = '7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
 CHECK_INTERVAL = 10        # seconds between ping checks
-FALLBACK_TIMEOUT = 120     # 2 minutes = 120 seconds
-MAINTENANCE_MSG = "<b>\ud83d\udea7 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
-ABOUT_MSG = "<b>This bot is temporarily under maintenance.</b>\n\nPlease wait while we restore full service. Thank you for your patience \ud83d\ude4f"
+FALLBACK_TIMEOUT = 70    # 2 minutes = 120 seconds
+MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
+ABOUT_MSG = "<b>This bot is temporarily under maintenance.</b>\n\nPlease wait while we restore full service. Thank you for your patience 🙏"
 
 # === Globals ===
 app = Flask(__name__)
@@ -36,6 +36,7 @@ def about():
 
 # === Passive Polling Loop with Blink Logic ===
 async def poll_updates_loop():
+    global polling_active
     print("[Fallback] Telegram polling started.")
     offset = None
 
@@ -68,18 +69,21 @@ async def poll_updates_loop():
                     print("Polling error:", e)
                 if stop_event.is_set():
                     print("[Fallback] Stopping polling early due to ping.")
+                    polling_active = False
                     return
             print("[Fallback] Polling OFF (3s)...")
             await asyncio.sleep(3)
     except Exception as e:
         print("[Fallback] Critical polling error:", e)
+    finally:
+        polling_active = False
+        print("[Fallback] Polling loop exited.")
 
 # === Watcher Thread to Control Polling ===
 def fallback_watchdog():
     global polling_active
     loop = asyncio.new_event_loop()
     asyncio.set_event_loop(loop)
-    task = None
 
     while True:
         now = datetime.now()
@@ -88,12 +92,11 @@ def fallback_watchdog():
         if should_poll and not polling_active:
             print("[Fallback] No ping received. Starting Telegram fallback mode...")
             stop_event.clear()
-            task = loop.create_task(poll_updates_loop())
+            loop.call_soon_threadsafe(loop.create_task, poll_updates_loop())
             polling_active = True
         elif not should_poll and polling_active:
             print("[Fallback] Ping received again. Stopping Telegram fallback mode.")
             stop_event.set()
-            polling_active = False
 
         loop.run_until_complete(asyncio.sleep(CHECK_INTERVAL))
 
