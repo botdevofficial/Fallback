@@ -9,8 +9,8 @@ from telegram.constants import ParseMode
 BOT_TOKEN = '7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
 CHECK_INTERVAL = 10        # seconds between ping checks
 FALLBACK_TIMEOUT = 70    # 2 minutes = 120 seconds
-MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again."
-ABOUT_MSG = "<b>This bot is temporarily under maintenance.</b>\n\nPlease wait while we restore full service. Thank you for your patience 🙏"
+MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again.\n click on /about 👈🏻 to know how this bot work "
+ABOUT_MSG = "<b>🚀 Promoter Bot shares your saved link with real users using smart automation, daily free boosts, and referrals.</b> \n <a href="https://t.me/Testovila_bot">Track promotions</a> or track your link.\n Now the bot is under a little maintenance \n Visit our website to see how to make your promotion msg look attractive 😄  \n https://lnk.ink/Promostyle.com \n Thank you for your patience 🙏"
 
 # === Globals ===
 app = Flask(__name__)
