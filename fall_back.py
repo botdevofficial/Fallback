@@ -1,4 +1,5 @@
 import asyncio
+import time
 import requests
 import threading
 from datetime import datetime, timedelta
@@ -54,9 +55,20 @@ def about():
 def save_user_id_to_jsonbin(user_id: int):
     try:
         res = requests.get(JSONBIN_URL + '/latest', headers=JSONBIN_HEADERS)
+        print("[JSONBin GET]", res.status_code)
+
         data = res.json().get('record', {}) if res.status_code == 200 else {}
         data[str(user_id)] = True
-        requests.put(JSONBIN_URL, headers=JSONBIN_HEADERS, json={"record":data})
+
+        time.sleep(1)  # avoid triggering rate limit
+
+        response = requests.put(
+            JSONBIN_URL,
+            headers={**JSONBIN_HEADERS, "X-Bin-Versioning": "false"},
+            json={"record": data}
+        )
+        print("[JSONBin PUT]", response.status_code, response.text)
+
     except Exception as e:
         print(f"[JSONBin] Save error: {e}")
         
