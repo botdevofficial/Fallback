@@ -21,6 +21,13 @@ https://lnk.ink/Promostyle.com
 
 🙏 Thank you for your patience!"""
 
+JSONBIN_API_KEY = "$2a$10$x7VBgNRztww.OlDubg9dS.Q86N6zGeCi/6oSlWc3NE7wYYAW3deia"
+JSONBIN_BIN_ID = "6888d942f7e7a370d1efd82c"
+JSONBIN_URL = f"https://api.jsonbin.io/v3/b/{JSONBIN_BIN_ID}"
+JSONBIN_HEADERS = {
+    "X-Master-Key": JSONBIN_API_KEY,
+    "Content-Type": "application/json"
+}
 # === Globals ===
 app = Flask(__name__)
 bot = Bot(token=BOT_TOKEN)
@@ -43,6 +50,15 @@ def health():
 def about():
     return ABOUT_MSG, 200
 
+def save_user_id_to_jsonbin(user_id: int):
+    try:
+        res = requests.get(JSONBIN_URL + '/latest', headers=JSONBIN_HEADERS)
+        data = res.json().get('record', {}) if res.status_code == 200 else {}
+        data[str(user_id)] = True
+        requests.put(JSONBIN_URL, headers=JSONBIN_HEADERS, json={"record":data})
+    except Exception as e:
+        print(f"[JSONBin] Save error: {e}")
+        
 # === Passive Polling Loop with Blink Logic ===
 async def poll_updates_loop():
     global polling_active
@@ -60,6 +76,10 @@ async def poll_updates_loop():
                         offset = updates[-1].update_id + 1
                         for update in updates:
                             if update.message and update.message.text:
+                                try:
+                                  save_user_id_to_jsonbin(update.effective_user.id)
+                                except Exception as e:
+                                  print(f"[User Save Error] {e}")
                                 if update.message.text.strip() == "/about":
                                     await bot.send_message(
                                         chat_id=update.effective_chat.id,
