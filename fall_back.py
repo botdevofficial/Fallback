@@ -11,7 +11,7 @@ from telegram.constants import ParseMode
 BOT_TOKEN = '7794167983:AAFZwjzFVq-T4oljDLDAA-JTw9ywEp2Urb0'
 CHECK_INTERVAL = 10        # seconds between ping checks
 FALLBACK_TIMEOUT = 70    # 2 minutes = 120 seconds
-MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again.\n click on /about 👈🏻 to know how this bot work "
+MAINTENANCE_MSG = "<b>🚧 Bot is under maintenance</b>\nPlease wait a few minutes and try again.\n click on /about 👈🏻 to know how this bot work \n\n This bot may not work 7am-7pm IST day time. Come again later"
 ABOUT_MSG = """<b>🚀 Promoter Bot shares your saved link with real users using smart automation, daily free boosts, and referrals.</b>
 
 <a href="https://t.me/Testovila_bot">Track promotions</a> or track your link.
